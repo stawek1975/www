@@ -1,57 +1,115 @@
-<DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-	
-	<style>
-    video {
-      object-fit: cover;
-    }
-    @media (min-width: 1000px) {
-      video {
-        height: 480px;
-      }
-    }
-  </style> 
+<script src='https://code.jquery.com/jquery-3.3.1.min.js'></script>
+
+<meta charset="utf-8">
+<meta id="theme-color" name="theme-color" content="#fff">
+<base target="_blank">
+
+<title>Camera Test</title>
+
+<style>
+div.select {
+  margin: 0 0 1em 0;
+}
+</style>
+
 </head>
 
 <body>
-	<div id="container">
-		<h1> test </h1>
-		<video onclick="takeSnapshot(this);" autoplay playsinline> </video>
+
+<div id="container">
+	<div class="select">
+		<label for="videoSource">Choose camera: </label><select id="videoSource"></select>
 	</div>
+
+	<video onclick="snapshot(this);" autoplay width="400" height="500"></video>
+	<canvas  id="onePhoto" width="400" height="500"></canvas>
 	<br>
-		<button onclick="takeSnapshot(this);">Photo</button> 
-	<br>
-	<br>
-		<button onclick="snapshot(this);">Photo 2</button> 
-	<br>
-	
-	<canvas  id="myCanvas" width="400" height="350"></canvas>
+	<button id="upload" onclick="savePhoto(this);">Upload photo</button>
+</div>
+
+<script>
+'use strict';
+
+var canvas, ctx;
+canvas = document.getElementById("onePhoto");
+ctx = canvas.getContext('2d');
+
+var videoElement = document.querySelector('video');
+var videoSelect = document.querySelector('select#videoSource');
+
+navigator.mediaDevices.enumerateDevices()
+  .then(gotDevices).then(getStream).catch(handleError);
+
+
+videoSelect.onchange = getStream;
+
+function gotDevices(deviceInfos) {
+	for (var i = 0; i !== deviceInfos.length; ++i) {
+		var deviceInfo = deviceInfos[i];
+		var option = document.createElement('option');
+		option.value = deviceInfo.deviceId;
 		
-	 <script>
-		'use strict';
-
-		var constraints = {
-		  video: true
-		};
-
-		var video = document.querySelector('video');
-
-		function handleSuccess(stream) {
-		  window.stream = stream; // only to make stream available to console
-		  video.srcObject = stream;
+	/*    if (deviceInfo.kind === 'audioinput') {
+		  option.text = deviceInfo.label ||
+			'microphone ' + (audioSelect.length + 1);
+		  audioSelect.appendChild(option);
+		} else */if (deviceInfo.kind === 'videoinput') {
+			option.text = deviceInfo.label;
+			videoSelect.appendChild(option);
+		} else {
+			console.log('Found one other kind of source/device: ', deviceInfo);
 		}
+	}
+}
 
-		function handleError(error) {
-		  console.log('getUserMedia error: ', error);
-		}
+function getStream() {
+	if (window.stream) {
+		window.stream.getTracks().forEach(function(track) {
+			track.stop();
+		});
+	}
 
-		
-		
-		navigator.mediaDevices.getUserMedia(constraints).
-		  then(handleSuccess).catch(handleError);
-	  </script>
-	
+var constraints = {
+	video: {
+      deviceId: { exact: videoSelect.value }
+	}
+};
+
+	navigator.mediaDevices.getUserMedia(constraints).
+		then(gotStream).catch(handleError);
+}
+
+function gotStream(stream) {
+	window.stream = stream; // make stream available to console
+	videoElement.srcObject = stream;
+}
+
+function handleError(error) {
+	console.log('Error: ', error);
+}
+
+function snapshot() {
+	var video = document.querySelector('video');
+	canvas.width=video.width;
+	canvas.height=video.height;
+	ctx.drawImage(video, 0,0, video.width, video.height);
+}
+
+function savePhoto() {
+	var dataUrl = canvas.toDataURL();
+	$.ajax({
+	type: "POST",
+	url: "savePhoto.php",
+	data: { 
+	imgBase64: dataUrl
+	}
+	});
+}
+
+</script>
+
 </body>
 </html>
