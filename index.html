@@ -1,14 +1,57 @@
-<!doctype html>
+<DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Camera demo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
-    <script src="main.js"></script>
+    <meta charset="utf-8">
+	
+	<style>
+    video {
+      object-fit: cover;
+    }
+    @media (min-width: 1000px) {
+      video {
+        height: 480px;
+      }
+    }
+  </style> 
 </head>
+
 <body>
-    Hello World!
+	<div id="container">
+		<h1> test </h1>
+		<video onclick="takeSnapshot(this);" autoplay playsinline> </video>
+	</div>
+	<br>
+		<button onclick="takeSnapshot(this);">Photo</button> 
+	<br>
+	<br>
+		<button onclick="snapshot(this);">Photo 2</button> 
+	<br>
+	
+	<canvas  id="myCanvas" width="400" height="350"></canvas>
+		
+	 <script>
+		'use strict';
+
+		var constraints = {
+		  video: true
+		};
+
+		var video = document.querySelector('video');
+
+		function handleSuccess(stream) {
+		  window.stream = stream; // only to make stream available to console
+		  video.srcObject = stream;
+		}
+
+		function handleError(error) {
+		  console.log('getUserMedia error: ', error);
+		}
+
+		
+		
+		navigator.mediaDevices.getUserMedia(constraints).
+		  then(handleSuccess).catch(handleError);
+	  </script>
+	
 </body>
 </html>
